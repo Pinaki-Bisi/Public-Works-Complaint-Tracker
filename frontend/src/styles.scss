@@ -1,0 +1,66 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: "DM Sans", "Segoe UI", sans-serif;
+  background: #f3f5f8;
+  color: #1c2430;
+}
+
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.card-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.muted {
+  color: #5c6b7a;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status-SUBMITTED,
+.status-ACKNOWLEDGED { background: #e8f0fe; color: #1a4b8c; }
+.status-ASSIGNED,
+.status-IN_PROGRESS { background: #fff4d6; color: #8a5a00; }
+.status-ON_HOLD,
+.status-REOPENED { background: #f3e8ff; color: #6b21a8; }
+.status-RESOLVED,
+.status-CLOSED { background: #e6f6ea; color: #166534; }
+.status-REJECTED { background: #fde8e8; color: #991b1b; }
+
+.toolbar-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.form-stack {
+  display: grid;
+  gap: 14px;
+  max-width: 560px;
+}
+
+.full-width {
+  width: 100%;
+}

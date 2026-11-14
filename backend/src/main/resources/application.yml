@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: pwct-api
+  datasource:
+    url: jdbc:oracle:thin:@//localhost:1521/XEPDB1
+    username: app_user
+    password: AppPass123
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.OracleDialect
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:oYtY0o4mWmAHROrEboUVhj2P429Dd8y8U7+CIJ/OK6s=}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  cors:
+    origins: ${CORS_ORIGINS:http://localhost:4200}

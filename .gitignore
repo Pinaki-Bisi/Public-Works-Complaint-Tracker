@@ -1,0 +1,28 @@
+# Build
+backend/target/
+frontend/dist/
+frontend/.angular/
+frontend/node_modules/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# Env / secrets
+.env
+*.env.local
+application-local.yml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log

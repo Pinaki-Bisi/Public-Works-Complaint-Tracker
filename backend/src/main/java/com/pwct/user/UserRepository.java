@@ -1,0 +1,20 @@
+package com.pwct.user;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.pwct.common.RoleName;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    List<User> findByRoles_NameAndDepartment_Id(RoleName role, Long departmentId);
+
+    List<User> findByRoles_Name(RoleName role);
+}

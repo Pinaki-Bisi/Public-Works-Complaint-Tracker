@@ -1,0 +1,58 @@
+package com.pwct.complaint;
+
+import java.time.Instant;
+
+import com.pwct.common.WorkOrderStatus;
+import com.pwct.user.User;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "work_orders")
+@Getter
+@Setter
+@NoArgsConstructor
+public class WorkOrder {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "complaint_id", nullable = false, unique = true)
+    private Complaint complaint;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "assignee_id", nullable = false)
+    private User assignee;
+
+    @Column(name = "scheduled_at")
+    private Instant scheduledAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private WorkOrderStatus status = WorkOrderStatus.OPEN;
+
+    @Column(length = 1000)
+    private String notes;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt = Instant.now();
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt = Instant.now();
+}
