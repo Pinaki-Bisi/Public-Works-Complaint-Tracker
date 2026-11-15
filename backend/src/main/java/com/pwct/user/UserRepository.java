@@ -9,6 +9,7 @@ import com.pwct.common.RoleName;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
+    Optional<User> findByEmailIgnoreCase(String email);
 
     boolean existsByUsername(String username);
 

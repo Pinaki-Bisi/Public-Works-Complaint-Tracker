@@ -57,7 +57,7 @@ public class DataInitializer implements CommandLineRunner {
         seed("supervisor", "supervisor@pwct.local", "Roads Supervisor", roads, Set.of(supervisorRole));
         seed("crew", "crew@pwct.local", "Roads Crew", roads, Set.of(crewRole));
         seed("citizen", "citizen@pwct.local", "Alex Citizen", null, Set.of(citizenRole));
-        log.info("Seeded demo users (password: {})", DEMO_PASSWORD);
+        log.info("Seeded demo accounts for local development");
     }
 
     private void seed(String username, String email, String fullName, Department department, Set<Role> roles) {

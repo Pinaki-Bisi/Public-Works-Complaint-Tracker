@@ -25,6 +25,9 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string) { return this.http.post<{ message: string }>('/api/auth/password/forgot', { email }); }
+  resetPassword(token: string, password: string) { return this.http.post<void>('/api/auth/password/reset', { token, password }); }
+
   logout(): void {
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(USER_KEY);

@@ -13,8 +13,8 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
   template: `
-    <div class="page" style="max-width: 480px; padding-top: 56px;">
-      <h1>Citizen registration</h1>
+    <div class="page auth-page">
+      <p class="eyebrow">Join your community</p><h1>Create an account</h1>
       <mat-card>
         <mat-card-content>
           <form [formGroup]="form" (ngSubmit)="submit()" class="form-stack" style="margin-top: 12px;">
@@ -29,6 +29,10 @@ import { AuthService } from '../services/auth.service';
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Email</mat-label>
               <input matInput type="email" formControlName="email" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Phone (optional)</mat-label>
+              <input matInput type="tel" formControlName="phoneNumber" />
             </mat-form-field>
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Password</mat-label>
@@ -50,6 +54,7 @@ export class RegisterComponent {
     fullName: ['', Validators.required],
     username: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
+    phoneNumber: [''],
     password: ['', [Validators.required, Validators.minLength(8)]]
   });
 

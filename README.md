@@ -260,6 +260,44 @@ Each time you want to run the application:
 - [ ] Run `npm start`.
 - [ ] Open http://localhost:4200/ in your browser.
 
+## Added platform features
+
+The project now includes paginated complaint search and sorting, status/priority/date filters, status history, comments, photo attachments through an S3-compatible bucket, dashboard analytics, notification inbox, optional SMTP delivery, scheduled overdue reminders, password reset, role/account administration, and XLSX/PDF report downloads.
+
+### Additional backend settings
+
+| Variable | Purpose |
+|---|---|
+| `S3_BUCKET` | Required bucket name for complaint photo uploads |
+| `AWS_REGION` | S3 region (default `us-east-1`) |
+| `S3_ENDPOINT` | Optional S3-compatible endpoint (for example MinIO) |
+| `EMAIL_NOTIFICATIONS_ENABLED` | Set `true` to deliver reset and complaint emails |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | SMTP connection settings |
+| `MAIL_FROM` | Sender address |
+| `JWT_SECRET` | Set a strong random secret for the running environment |
+
+Create the bucket ahead of time and provide AWS credentials through the standard AWS SDK credential chain. Photo uploads accept JPEG, PNG, and WebP up to 5 MB.
+
+Flyway migrations `V2` and `V3` add notification/reset/attachment tables, optimistic locking, and phone number support. Do not edit previously applied migrations; add a new numbered migration for future schema changes.
+
+### API documentation
+
+Once the backend is running, visit `http://localhost:8080/swagger-ui.html`. The OpenAPI schema is available at `/v3/api-docs`. Use **Authorize** in Swagger UI with a JWT returned by `/api/auth/login`.
+
+### Quality commands
+
+```powershell
+cd backend
+mvn test
+mvn verify
+cd ..\frontend
+npm.cmd run build
+```
+
+The backend includes JUnit/Mockito test dependencies and the initial workflow unit tests. SonarQube settings are in `sonar-project.properties`.
+
+For Angular unit tests, install a Chrome/Chromium browser and run `npm.cmd test` from `frontend/`. For Playwright E2E tests, start Oracle and the Spring Boot API first, then install the Playwright browser with `npx playwright install chromium` and run `npm.cmd run test:e2e`. Set `PWCT_E2E_USERNAME`, `PWCT_E2E_PASSWORD`, `PWCT_E2E_SUPERVISOR`, and `PWCT_E2E_CREW` to use dedicated test accounts.
+
 ---
 
 ## Notes

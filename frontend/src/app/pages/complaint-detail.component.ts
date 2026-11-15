@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
-import { Complaint, User } from '../models';
+import { Attachment, Complaint, User } from '../models';
 import { ComplaintService } from '../services/complaint.service';
 import { AuthService } from '../services/auth.service';
 
@@ -15,18 +15,30 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-complaint-detail',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule,
+    CommonModule, RouterLink, ReactiveFormsModule, MatCardModule, MatFormFieldModule,
     MatInputModule, MatButtonModule, MatSelectModule
   ],
   template: `
     <div class="page" *ngIf="complaint as c">
-      <p class="muted">{{ c.ticketNo }}</p>
-      <h1>{{ c.title }}</h1>
+      <div class="page-heading"><div><p class="eyebrow">Complaint record · {{ c.ticketNo }}</p><h1>{{ c.title }}</h1>
+      <p class="page-intro">{{ c.location }} · filed by {{ c.createdByName }}</p></div>
+      <a mat-stroked-button routerLink="/">Back to workspace</a></div>
       <p><span class="status-chip" [ngClass]="'status-' + c.status">{{ c.status }}</span> · {{ c.priority }} · {{ c.category.name }}</p>
       <p>{{ c.description }}</p>
       <p class="muted">{{ c.location }} · filed by {{ c.createdByName }}</p>
       <p *ngIf="c.workOrder" class="muted">Assigned to {{ c.workOrder.assigneeName }} ({{ c.workOrder.status }})</p>
 
+      <section class="detail-section"><div class="section-heading"><div><p class="eyebrow">Evidence</p><h2>Photos</h2></div></div>
+      <input type="file" accept="image/jpeg,image/png,image/webp" (change)="upload($event)" />
+      <p class="muted">JPEG, PNG, or WebP up to 5 MB.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        @for (photo of photos; track photo.id) {
+          <figure><img [src]="photoUrls[photo.id]" [alt]="photo.fileName" style="max-width:240px;max-height:180px;object-fit:cover" />
+            <figcaption>{{ photo.fileName }}</figcaption></figure>
+        }
+      </div>
+
+      </section>
       @if (canStaff) {
         <mat-card style="margin: 16px 0;">
           <mat-card-content>
@@ -53,8 +65,8 @@ import { AuthService } from '../services/auth.service';
         </mat-card>
       }
 
-      <h3>Timeline</h3>
-      <ul>
+      <section class="detail-section"><div class="section-heading"><div><p class="eyebrow">Activity</p><h2>Progress timeline</h2></div></div>
+      <ul class="status-timeline">
         @for (item of c.history; track item.id) {
           <li>{{ item.createdAt | date:'short' }} — {{ item.actorName }}: {{ item.oldStatus || '—' }} → {{ item.newStatus }}
             <span *ngIf="item.comment"> ({{ item.comment }})</span>
@@ -62,7 +74,8 @@ import { AuthService } from '../services/auth.service';
         }
       </ul>
 
-      <h3>Comments</h3>
+      </section>
+      <section class="detail-section"><div class="section-heading"><div><p class="eyebrow">Conversation</p><h2>Updates and notes</h2></div></div>
       @for (item of c.comments; track item.id) {
         <p><strong>{{ item.authorName }}</strong> <span class="muted">{{ item.createdAt | date:'short' }}</span><br />{{ item.body }}</p>
       }
@@ -73,12 +86,15 @@ import { AuthService } from '../services/auth.service';
         </mat-form-field>
         <button mat-stroked-button type="submit" [disabled]="commentForm.invalid">Post comment</button>
       </form>
+      </section>
     </div>
   `
 })
 export class ComplaintDetailComponent implements OnInit {
   complaint: Complaint | null = null;
   crew: User[] = [];
+  photos: Attachment[] = [];
+  photoUrls: Record<number, string> = {};
   commentForm = this.fb.nonNullable.group({ body: ['', Validators.required] });
   assignForm = this.fb.nonNullable.group({ assigneeId: [0, Validators.required] });
 
@@ -126,7 +142,23 @@ export class ComplaintDetailComponent implements OnInit {
 
   load(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.complaints.get(id).subscribe((c) => (this.complaint = c));
+    this.complaints.get(id).subscribe((c) => {
+      this.complaint = c;
+      this.complaints.attachments(id).subscribe((photos) => {
+        this.photos = photos;
+        photos.forEach((photo) => this.complaints.attachmentContent(id, photo.id).subscribe((blob) => {
+          this.photoUrls[photo.id] = URL.createObjectURL(blob);
+        }));
+      });
+    });
+  }
+
+  upload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!this.complaint || !file) return;
+    this.complaints.uploadAttachment(this.complaint.id, file).subscribe(() => this.load());
+    input.value = '';
   }
 
   addComment(): void {

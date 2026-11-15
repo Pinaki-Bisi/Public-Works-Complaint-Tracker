@@ -12,7 +12,9 @@ import { ComplaintService } from '../services/complaint.service';
   imports: [CommonModule, RouterLink, MatTableModule, MatButtonModule],
   template: `
     <div class="page">
-      <h1>Assigned work</h1>
+      <div class="page-heading"><div><p class="eyebrow">Field operations</p><h1>Assigned work</h1><p>Your scheduled repair jobs and next steps.</p></div>
+        <span class="role-tag">{{ rows.length }} assignments</span></div>
+      <div class="data-card table-wrap">
       <table mat-table [dataSource]="rows" class="full-width">
         <ng-container matColumnDef="ticketNo">
           <th mat-header-cell *matHeaderCellDef>Ticket</th>
@@ -44,7 +46,8 @@ import { ComplaintService } from '../services/complaint.service';
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let row; columns: columns;"></tr>
       </table>
-      <p *ngIf="rows.length === 0" class="muted">No assigned work orders.</p>
+      <div *ngIf="rows.length === 0" class="empty-state"><span class="empty-mark">✓</span><h3>All caught up</h3><p>New work orders assigned to you will appear here.</p></div>
+      </div>
     </div>
   `
 })
@@ -59,7 +62,7 @@ export class CrewBoardComponent implements OnInit {
   }
 
   reload(): void {
-    this.complaints.list().subscribe((rows) => (this.rows = rows));
+    this.complaints.list({ size: 50 }).subscribe((result) => (this.rows = result.content));
   }
 
   advance(row: Complaint, status: string): void {

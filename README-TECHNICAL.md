@@ -459,3 +459,19 @@ When changing or extending the application, use these files as the authoritative
 | Frontend scripts and dependencies | `frontend/package.json` |
 | Frontend API forwarding | `frontend/proxy.conf.json` |
 | Frontend routes and pages | Angular routing and component files |
+# Feature implementation notes
+
+The extended workflow is represented by additive Oracle migrations `V2__features.sql` and `V3__user_phone.sql`. They add complaint optimistic locking, attachment metadata, persisted notifications, password reset tokens, and optional phone numbers. Existing V1 schema is preserved for Flyway checksum safety.
+
+## Additional APIs
+
+- `GET /api/complaints`: role-scoped `Page<ComplaintDto>` with `page`, `size`, `sort`, `q`, `status`, `priority`, `categoryId`, `departmentId`, `fromDate`, and `toDate` filters.
+- `POST /api/complaints/{id}/attachments`, `GET /api/complaints/{id}/attachments`, and `GET /api/complaints/{id}/attachments/{attachmentId}/content`.
+- `GET /api/notifications`, `PATCH /api/notifications/{id}/read`.
+- `/api/admin/analytics`, `/api/admin/reports/complaints`, `/api/admin/reports/overdue`, plus user, role, enabled-state, department, and category administration.
+- `POST /api/auth/password/forgot` and `POST /api/auth/password/reset`.
+- OpenAPI UI: `/swagger-ui.html`; API definition: `/v3/api-docs`.
+
+Photo binaries are stored in S3-compatible object storage; Oracle keeps metadata and references. Image uploads are limited to JPEG/PNG/WebP and 5 MB, with image magic-byte validation. Notifications are persisted for in-app delivery, and SMTP delivery is optional. Categories and departments use in-process Caffeine caching with admin-write invalidation.
+
+Complaint history records each status change and reassignment with the acting user and timestamp. JPA `@Version` prevents conflicting writes. A daily scheduled job queues overdue reminders for unresolved complaints older than seven days. XLSX/PDF exports accept the same core filters. Backend tests use JUnit 5, Mockito, and MockMvc; Angular uses Jasmine/Karma; the Playwright suite exercises sign-up/login and a complaint assignment lifecycle.

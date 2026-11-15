@@ -7,9 +7,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 import com.pwct.common.ApiException;
 import com.pwct.common.ComplaintStatus;
@@ -25,6 +29,7 @@ import com.pwct.complaint.dto.CreateComplaintRequest;
 import com.pwct.complaint.dto.StatusUpdateRequest;
 import com.pwct.user.User;
 import com.pwct.user.UserRepository;
+import com.pwct.notification.NotificationService;
 
 @Service
 public class ComplaintService {
@@ -39,20 +44,24 @@ public class ComplaintService {
     private final ComplaintCategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final WorkOrderRepository workOrderRepository;
+    private final NotificationService notificationService;
 
     public ComplaintService(
             ComplaintRepository complaintRepository,
             ComplaintCategoryRepository categoryRepository,
             UserRepository userRepository,
-            WorkOrderRepository workOrderRepository
+            WorkOrderRepository workOrderRepository,
+            NotificationService notificationService
     ) {
         this.complaintRepository = complaintRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.workOrderRepository = workOrderRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
+    @Cacheable("complaintCategories")
     public List<CategoryDto> categories() {
         return categoryRepository.findAll().stream().map(CategoryDto::from).toList();
     }
@@ -74,6 +83,9 @@ public class ComplaintService {
         complaint.setStatus(ComplaintStatus.SUBMITTED);
         addHistory(complaint, null, ComplaintStatus.SUBMITTED, actor, "Complaint submitted");
         complaintRepository.save(complaint);
+        userRepository.findByRoles_NameAndDepartment_Id(RoleName.SUPERVISOR, category.getDepartment().getId())
+                .forEach(supervisor -> notificationService.notify(supervisor, complaint,
+                        "New complaint submitted: " + complaint.getTicketNo()));
         return ComplaintDto.from(hydrate(complaint), true);
     }
 
@@ -97,6 +109,27 @@ public class ComplaintService {
             rows = applyFilters(rows, status, categoryId);
         }
         return rows.stream().map(this::hydrate).map(c -> ComplaintDto.from(c, false)).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ComplaintDto> search(String username, String term, ComplaintStatus status, Priority priority,
+            Long categoryId, Long departmentFilterId, Instant fromDate, Instant toDate, Pageable pageable) {
+        User actor = requireUser(username);
+        boolean admin = hasRole(actor, RoleName.ADMIN);
+        Long ownerId = hasRole(actor, RoleName.CITIZEN) ? actor.getId() : null;
+        Long departmentId = hasRole(actor, RoleName.SUPERVISOR) && actor.getDepartment() != null
+                ? actor.getDepartment().getId() : null;
+        Long assigneeId = hasRole(actor, RoleName.CREW) ? actor.getId() : null;
+        if (!admin && ownerId == null && departmentId == null && assigneeId == null) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "No complaint access is assigned to this account");
+        }
+        if (fromDate != null && toDate != null && !fromDate.isBefore(toDate)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "fromDate must be earlier than toDate");
+        }
+        return complaintRepository.searchScoped(admin, ownerId, departmentId, assigneeId, status, priority,
+                        categoryId, departmentFilterId, fromDate, toDate,
+                        term == null || term.isBlank() ? null : term.trim(), pageable)
+                .map(c -> ComplaintDto.from(hydrate(c), false));
     }
 
     @Transactional(readOnly = true)
@@ -132,6 +165,8 @@ public class ComplaintService {
         }
         applyWorkOrderStatus(complaint, next);
         transition(complaint, next, actor, request.comment());
+        notificationService.notify(complaint.getCreatedBy(), complaint,
+                "Complaint " + complaint.getTicketNo() + " status changed to " + next);
         return ComplaintDto.from(hydrate(complaint), true);
     }
 
@@ -171,6 +206,9 @@ public class ComplaintService {
         workOrder.setStatus(WorkOrderStatus.OPEN);
         workOrder.setUpdatedAt(Instant.now());
         workOrderRepository.save(workOrder);
+        notificationService.notify(crew, complaint, "You were assigned complaint " + complaint.getTicketNo());
+        notificationService.notify(complaint.getCreatedBy(), complaint,
+                "Complaint " + complaint.getTicketNo() + " was assigned to a repair crew");
         if (current == ComplaintStatus.SUBMITTED) {
             transition(complaint, ComplaintStatus.ACKNOWLEDGED, actor, "Acknowledged on assign");
         }

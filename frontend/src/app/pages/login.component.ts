@@ -13,11 +13,13 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
   template: `
-    <div class="page" style="max-width: 420px; padding-top: 72px;">
-      <h1>Public Works</h1>
-      <p class="muted">Sign in to file or manage infrastructure complaints.</p>
+    <div class="page auth-page">
+      <p class="eyebrow">CivicWorks · Public service portal</p>
+      <h1>Welcome back</h1>
+      <p class="muted">Sign in to report local issues or coordinate repairs.</p>
       <mat-card>
         <mat-card-content>
+          <div class="auth-card-heading"><span class="brand-mark auth-mark">PW</span><span><b>Community access</b><small>Secure sign in</small></span></div>
           <form [formGroup]="form" (ngSubmit)="submit()" class="form-stack" style="margin-top: 12px;">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Username</mat-label>
@@ -35,6 +37,7 @@ import { AuthService } from '../services/auth.service';
         </mat-card-content>
       </mat-card>
       <p>Need an account? <a routerLink="/register">Register as a citizen</a></p>
+      <p><a routerLink="/forgot-password">Forgot your password?</a></p>
     </div>
   `
 })

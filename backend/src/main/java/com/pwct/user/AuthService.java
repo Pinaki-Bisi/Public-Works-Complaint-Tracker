@@ -50,11 +50,13 @@ public class AuthService {
         user.setEmail(request.email().trim().toLowerCase());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setFullName(request.fullName().trim());
+        user.setPhoneNumber(request.phoneNumber() == null || request.phoneNumber().isBlank() ? null : request.phoneNumber().trim());
         user.getRoles().add(citizen);
         userRepository.save(user);
         return toAuth(user);
     }
 
+    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password()));
