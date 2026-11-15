@@ -1,0 +1,53 @@
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-LocalOracleAdmin123}
+      APP_USER: ${DB_USERNAME:-app_user}
+      APP_USER_PASSWORD: ${DB_PASSWORD:-LocalAppPass123}
+    ports:
+      - "127.0.0.1:1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DB_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1
+      DB_USERNAME: ${DB_USERNAME:-app_user}
+      DB_PASSWORD: ${DB_PASSWORD:-LocalAppPass123}
+      JWT_SECRET: ${JWT_SECRET:-local-only-change-this-jwt-secret-32-chars-minimum}
+      CORS_ORIGINS: http://localhost:4200
+      S3_BUCKET: ${S3_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+    depends_on:
+      oracle:
+        condition: service_healthy
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:4200:80"
+    restart: unless-stopped
+
+volumes:
+  oracle-data:

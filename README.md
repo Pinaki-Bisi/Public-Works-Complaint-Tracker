@@ -260,6 +260,24 @@ Each time you want to run the application:
 - [ ] Run `npm start`.
 - [ ] Open http://localhost:4200/ in your browser.
 
+## Run the full stack with Docker Compose
+
+Docker Desktop with Compose v2 is required. The Compose stack starts Oracle Database Free, the Spring Boot API, and the Angular site. Oracle initializes an `app_user` schema; Flyway applies the project migrations when the API starts. The database data is kept in the `oracle-data` volume.
+
+1. Copy `.env.example` to `.env` in the repository root. These values are for local development only; use strong secrets for any shared deployment.
+2. From the repository root, run:
+
+   ```powershell
+   docker compose up --build
+   ```
+
+3. Wait for Oracle to become healthy and the API to finish starting, then open `http://localhost:4200`.
+4. To stop the services while preserving database data, press `Ctrl+C`, then run `docker compose down`. To remove the local database volume too, run `docker compose down -v` (this permanently deletes its data).
+
+The OpenAPI UI is available through `http://localhost:4200/swagger-ui.html`. The API is routed internally through the frontend's Nginx reverse proxy. Photo uploads remain unavailable until S3-compatible storage is configured with `S3_BUCKET` and suitable AWS credentials. The Oracle container requires several gigabytes of available memory; allow Docker Desktop enough memory. The included Oracle Free image is intended for local development, not as a production database deployment.
+
+The seeded local accounts use the password `Password123!`: `admin`, `supervisor`, `crew`, and `citizen`. Change or remove demo accounts before exposing the application beyond your machine.
+
 ## Added platform features
 
 The project now includes paginated complaint search and sorting, status/priority/date filters, status history, comments, photo attachments through an S3-compatible bucket, dashboard analytics, notification inbox, optional SMTP delivery, scheduled overdue reminders, password reset, role/account administration, and XLSX/PDF report downloads.
